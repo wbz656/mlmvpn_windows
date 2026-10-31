@@ -6,6 +6,7 @@
     <title>MLMVPN 中文版</title>
     <script src="ui/appearance-boot.js"></script>
     <script src="ui/safe-json.js"></script>
+    <script src="ui/locale-zh.js"></script>
     <link rel="stylesheet" href="assets/phosphor/regular/style.css" />
     <link rel="stylesheet" href="assets/phosphor/bold/style.css" />
     <link rel="stylesheet" href="assets/phosphor/fill/style.css" />
@@ -48,7 +49,7 @@
         };
       })();
     </script>
-    <link rel="stylesheet" href="style.css?v=cn-2" />
+    <link rel="stylesheet" href="style.css?v=cn-3" />
     <link rel="stylesheet" href="ui/tokens.css" />
     <link rel="stylesheet" href="ui/bridge.css" />
     <link rel="stylesheet" href="ui/components.css" />
@@ -105,7 +106,7 @@
 
           <div class="cn-card">
             <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">软件界面已切换为中文</div>
-            <div class="muted">已将主界面语言从波斯语切换为简体中文，并将方向调整为从右到左的桌面布局兼容模式。后续若需要继续细化所有界面文案，可继续补齐各模块的文本翻译。</div>
+            <div class="muted">已将主界面语言从波斯语切换为简体中文，并将方向调整为中文适配模式。后续如需继续完善全部功能模块文案，可继续逐块合并到中文版本。</div>
           </div>
 
           <div class="cn-card">
@@ -126,28 +127,26 @@
         const map = {
           'راهنما': '帮助',
           'درباره ما': '关于',
+          'درباره': '关于',
           'تنظیمات': '设置',
-          'اتصال': '连接',
-          'سرورها': '服务器',
-          'موقعیت': '位置',
-          'اسکن': '扫描',
+          'تنظیمات اسکن': '扫描设置',
           'تاریخچه اسکن‌ها': '扫描历史',
           'لیست تغییرات': '更新日志',
-          'بستن منو': '关闭菜单',
-          'دسترسی ویندوز': 'Windows 权限',
-          'تنظیمات نوتیفیکیشن': '通知设置',
           'حساب کلادفلر': 'Cloudflare 账户',
           'منابع حساب': '账户资源',
           'شبکه': '网络',
-          'تنظیمات پیشرفته VPN': '高级 VPN 设置',
           'صفحه نمایش': '显示',
           'مصرف': '流量',
           'سیستم': '系统',
-          'درباره': '关于',
-          'V2Ray پیشرفته': '高级 V2Ray',
+          'دیاگ اینترنت': '网络诊断',
+          'اسکن': '扫描',
+          'بستن منو': '关闭菜单',
+          'دسترسی ویندوز': 'Windows 权限',
+          'انتخاب آیپی ثابت': '选择固定 IP',
+          'پاک‌سازی عمیق DNS': '深度 DNS 清理',
           'تست سرعت': '速度测试',
-          'پروکسی سیستم': '系统代理',
-          'تونل کامل': '全局隧道',
+          'حالت روشن': '亮色模式',
+          'حالت تاریک': '深色模式',
           'اتصال سریع': '快速连接',
           'آمادهٔ اتصال': '准备连接',
           'متصل': '已连接',
@@ -158,52 +157,49 @@
           'افزودن اکانت': '添加账户',
           'حذف اکانت': '删除账户',
           'گزارش': '日志',
-          'اکانتی متصل نیست': '未连接账户',
           'حساب': '账户',
-          'دریافت کانفیگ': '获取配置',
-          'استقرار ورکر': '部署 Worker',
-          'دریافت دوباره': '重新获取',
-          'پنل مستقر نشده است': '面板未部署',
-          'بخش‌ها': '分组',
-          'گزارش زنده': '实时日志',
-          'تنظیمات': '设置',
-          'اخطار': '警告',
-          'خطا': '错误',
-          'در حال دریافت': '正在获取',
-          'این اکانت': '此账户',
-          'در حال استقرار': '正在部署',
-          'اتصال کوتاه': '快速连接',
-          'حذف': '删除',
-          'افزودن': '添加',
-          'انصراف': '取消',
-          'ذخیره': '保存',
-          'بررسی': '检查',
-          'خروجی': '出口',
-          'پورتها': '端口',
-          'کد': '代码',
-          'کلودفلر': 'Cloudflare',
+          'دریافت': '获取',
+          'به‌روزرسانی': '更新',
+          'اتصال': '连接',
           'ورکر': 'Worker',
-          'پروتکل': '协议',
-          'دستگاه': '设备',
           'پروکسی': '代理',
           'تونل': '隧道',
-          'لیست': '列表',
           'سرور': '服务器',
-          'خطا در ارتباط': '连接错误',
+          'پورت': '端口',
+          'آدرس': '地址',
+          'تأخیر': '延迟',
           'پیکربندی': '配置',
           'کانفیگ': '配置',
           'حالت': '模式',
-          'تأخیر': '延迟',
-          'ملل': '语言'
+          'خطا': '错误',
+          'اخطار': '警告',
+          'جست‌وجو': '搜索',
+          'نتیجه': '结果',
+          'پیش‌فرض': '默认',
+          'دستگاه': '设备',
+          'در حال بررسی': '正在检查',
+          'در حال دریافت': '正在获取',
+          'در حال اجرا': '运行中',
+          'خروجی': '输出',
+          'تایید': '确认',
+          'بازگشت': '返回',
+          'قبلی': '上一项',
+          'بعدی': '下一项',
+          'ترمینال اسکنر': '扫描终端',
+          'نوار بالا': '顶部栏'
         };
 
         function applyLocaleNode(node) {
           if (!node || node.nodeType !== 3) return;
           let text = node.textContent || '';
+          let replaced = false;
           for (const [from, to] of Object.entries(map)) {
-            if (text.includes(from)) text = text.split(from).join(to);
+            if (text.includes(from)) {
+              text = text.split(from).join(to);
+              replaced = true;
+            }
           }
-          if (text !== node.textContent) node.textContent = text;
+          if (replaced) node.textContent = text;
         }
 
         function walkTree(root) {
@@ -213,6 +209,20 @@
             return;
           }
           for (const child of root.childNodes || []) walkTree(child);
+
+          if (root instanceof HTMLElement) {
+            if (root.getAttribute('dir') === 'rtl') root.setAttribute('dir', 'ltr');
+            if (root.getAttribute('lang') === 'fa') root.setAttribute('lang', 'zh-CN');
+            ['placeholder', 'title', 'aria-label', 'value'].forEach((attr) => {
+              const value = root.getAttribute(attr);
+              if (!value) return;
+              let translated = value;
+              for (const [from, to] of Object.entries(map)) {
+                if (translated.includes(from)) translated = translated.replaceAll(from, to);
+              }
+              if (translated !== value) root.setAttribute(attr, translated);
+            });
+          }
         }
 
         document.documentElement.lang = 'zh-CN';
@@ -222,9 +232,9 @@
         document.querySelectorAll('[dir="rtl"]').forEach((el) => el.setAttribute('dir', 'ltr'));
         walkTree(document.body);
 
-        const observer = new MutationObserver((mutations) => {
-          for (const mutation of mutations) {
-            for (const node of mutation.addedNodes || []) walkTree(node);
+        const observer = new MutationObserver((records) => {
+          for (const record of records) {
+            for (const node of record.addedNodes || []) walkTree(node);
           }
         });
 
