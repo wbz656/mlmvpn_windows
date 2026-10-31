@@ -52,6 +52,24 @@ jobs:
         run: |
           Get-ChildItem dist -Force
 
+      - name: Sign generated files
+        shell: pwsh
+        if: always()
+        run: |
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+
+          if (-not $signtool) {
+            throw "signtool.exe was not found in the Windows SDK installation."
+          }
+
+          $files = Get-ChildItem dist -Recurse -File | Where-Object { $_.Extension -in ".exe", ".msi", ".dll" }
+          foreach ($file in $files) {
+            Write-Host "Signing: $($file.FullName)"
+            & $signtool.FullName sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a $file.FullName
+          }
+
       - name: Generate SHA256 checksums
         shell: pwsh
         run: |
