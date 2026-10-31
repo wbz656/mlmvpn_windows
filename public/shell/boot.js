@@ -5,7 +5,7 @@
    Runs after every panel's init (last script in <body>), so all the
    roots it adopts already exist. The old layout stays in the document,
    hidden by html.mv-shell, so any id the logic looks up is still there.
-
+ 
    Per-user lever: Settings › ظاهر › «چیدمان قدیمی» (stored as
    mv-shell = 'off') skips all of this and leaves the previous layout —
    for anyone the new shell gets in the way of while the redesign is
@@ -61,20 +61,52 @@
         try { if (!ndState.running && typeof ndStart === 'function') ndStart('full'); } catch (e) { /* not loaded */ }
       }
     };
-    if (O.promptNewTab) window.promptNewTab = function () { MV.wm.open('scanner'); return O.promptNewTab.apply(this, arguments); };
-    if (O.duplicateTab) window.duplicateTab = function () { MV.wm.open('scanner'); return O.duplicateTab.apply(this, arguments); };
-    // History restore and every other path that makes a scan tab should show it.
-    if (O.createTab) window.createTab = function () { var r = O.createTab.apply(this, arguments); MV.wm.open('scanner'); return r; };
+
+    // Some older inline HTML calls use the bare name `promptNewTab()` / `duplicateTab()`.
+    // Guarantee they exist on `window` even if the original app never captured them.
+    // Without this, `onclick="promptNewTab()"` can throw `ReferenceError`.
+    var fallbackPromptNewTab = function () {
+      if (O && O.promptNewTab && typeof O.promptNewTab === 'function') {
+        return O.promptNewTab.apply(this, arguments);
+      }
+      if (typeof window.createTab === 'function') {
+        return window.createTab('اسکن ' + ((window.tabIdCounter || 0) + 1), typeof window.defaultSettings === 'function' ? window.defaultSettings() : undefined);
+      }
+      if (typeof createTab === 'function') {
+        return createTab('اسکن ' + ((window.tabIdCounter || 0) + 1), typeof defaultSettings === 'function' ? defaultSettings() : undefined);
+      }
+      return undefined;
+    };
+    var fallbackDuplicateTab = function () {
+      if (O && O.duplicateTab && typeof O.duplicateTab === 'function') {
+        return O.duplicateTab.apply(this, arguments);
+      }
+      if (typeof window.getActiveTab === 'function') {
+        var src = window.getActiveTab();
+        if (!src && typeof window.promptNewTab === 'function') return window.promptNewTab.apply(this, arguments);
+        if (src && typeof window.createTab === 'function') {
+          return window.createTab(src.isp + ' (کپی)', { ...(src.settings || {}), customInput: (src.settings && src.settings.customInput) || '' });
+        }
+      }
+      if (typeof duplicateTab === 'function') {
+        return duplicateTab.apply(this, arguments);
+      }
+      return undefined;
+    };
+    window.promptNewTab = window.promptNewTab || fallbackPromptNewTab;
+    window.duplicateTab = window.duplicateTab || fallbackDuplicateTab;
+
+    if (O && O.createTab) window.createTab = function () { var r = O.createTab.apply(this, arguments); MV.wm.open('scanner'); return r; };
     // The archive and the combination centre are windows now (apps.js › sheetWindow). Their
     // windows run the original open/close, so every caller — toolbar, menus, the archive's
     // «انتقال به پنل ترکیب», the combination centre's export — keeps its behaviour.
-    if (O.openIpArchive) window.openIpArchive = function () { MV.wm.open('archive'); };
-    if (O.closeIpArchive) window.closeIpArchive = function () { MV.wm.close('archive'); };
-    if (O.openCombinationCenter) window.openCombinationCenter = function () { MV.wm.open('combo'); };
-    if (O.closeCombinationCenter) window.closeCombinationCenter = function () { MV.wm.close('combo'); };
+    if (O && O.openIpArchive) window.openIpArchive = function () { MV.wm.open('archive'); };
+    if (O && O.closeIpArchive) window.closeIpArchive = function () { MV.wm.close('archive'); };
+    if (O && O.openCombinationCenter) window.openCombinationCenter = function () { MV.wm.open('combo'); };
+    if (O && O.closeCombinationCenter) window.closeCombinationCenter = function () { MV.wm.close('combo'); };
     // «کانفیگ رایگان» too: V2Ray's button, the home icon and «انتقال به V2Ray» go through these.
-    if (O.openFreeConfigsModal) window.openFreeConfigsModal = function () { MV.wm.open('free'); };
-    if (O.closeFreeConfigsModal) window.closeFreeConfigsModal = function () { MV.wm.close('free'); };
+    if (O && O.openFreeConfigsModal) window.openFreeConfigsModal = function () { MV.wm.open('free'); };
+    if (O && O.closeFreeConfigsModal) window.closeFreeConfigsModal = function () { MV.wm.close('free'); };
   }
 
   // Dialogs that live inside a panel's template would be trapped under the dock once
