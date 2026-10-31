@@ -9,7 +9,7 @@
     "electron": "electron .",
     "test:store": "node tests/store/run.js",
     "test:fronts": "node tests/fronts/run.js",
-    "test": "node tests/store/run.js && node tests/fronts/run.js && node tests/gst/run.js && node tests/aether/run.js && node tests/github-tunnel/run.js && node tests/netdiag/run.js && node tests/traffic/feed.test.js",
+    "test": "node tests/store/run.js && node tests/fronts/run.js && node tests/gst/run.js && node tests/aether/run.js && node tests/github-tunnel/run.js && node tests/netdiag/run.js && node tests/gateway/run.js && node tests/v2ray/run.js && node tests/openvpn/run.js",
     "test:gst": "node tests/gst/run.js",
     "test:traffic": "node tests/traffic/feed.test.js",
     "test:aether": "node tests/aether/run.js",
@@ -53,6 +53,18 @@
       ],
       "requestedExecutionLevel": "asInvoker",
       "icon": "public/icon.ico"
+    },
+    "nsis": {
+      "artifactName": "${name}-Setup-${version}-${arch}.${ext}",
+      "installerIcon": "public/icon.ico",
+      "uninstallerIcon": "public/icon.ico",
+      "installerHeaderIcon": "public/icon.ico",
+      "oneClick": false,
+      "perMachine": true,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "license": "public/eula.txt",
+      "include": "build/installer.nsh"
     },
     "portable": {
       "artifactName": "${name}-Portable-${version}-${arch}.${ext}"
