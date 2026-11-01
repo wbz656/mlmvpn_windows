@@ -5,8 +5,34 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MLMVPN Scanner</title>
-  <!-- Appearance (dark/light, transparency, motion) is decided here, before the first
-       paint. The server has already injected the saved state above this line. -->
+  <script>
+    (function () {
+      function ensureGlobal(name, impl) {
+        if (typeof window[name] !== 'function') {
+          window[name] = function () {
+            if (typeof impl === 'function') return impl.apply(this, arguments);
+            return undefined;
+          };
+        }
+      }
+
+      ensureGlobal('toggleMainMenu', function () {
+        const menu = document.getElementById('main-menu');
+        const overlay = document.getElementById('main-menu-overlay');
+        if (!menu || !overlay) return;
+        menu.classList.toggle('hidden');
+        overlay.classList.toggle('hidden');
+      });
+
+      ensureGlobal('toggleNotificationMenu', function () {
+        const menu = document.getElementById('notification-menu');
+        const overlay = document.getElementById('notification-menu-overlay');
+        if (!menu || !overlay) return;
+        menu.classList.toggle('hidden');
+        overlay.classList.toggle('hidden');
+      });
+    })();
+  </script>
   <script src="ui/appearance-boot.js"></script>
   <script src="ui/safe-json.js"></script>
   <link rel="stylesheet" href="assets/phosphor/regular/style.css" />
@@ -17,9 +43,6 @@
   <script src="ui/zh-cn.js"></script>
   <script>
     tailwind.config = (function () {
-      // Design tokens (ui/tokens.css) as Tailwind colours. A function rather than a bare
-      // var(): Tailwind cannot put an opacity modifier (bg-gs-primary/10) on a var() and
-      // silently generates nothing, so the alpha is applied with color-mix instead.
       function tok(name) {
         return function (o) {
           var a = o && o.opacityValue;
@@ -80,8 +103,6 @@
                 red: tok('--mv-red-ink'),
                 string: tok('--mv-orange-ink')
               },
-              // The design system's own names — what new and migrated markup uses:
-              // text-mv-label-2, bg-mv-fill, border-mv-sep-2, bg-mv-green/15, text-mv-red-ink.
               mv: (function () {
                 var c = {
                   label: { DEFAULT: tok('--mv-label'), 2: tok('--mv-label-2'), 3: tok('--mv-label-3'), 4: tok('--mv-label-4') },
@@ -112,32 +133,12 @@
   <link rel="stylesheet" href="style.css?v=1781010218569" />
 
   <style>
-    /* Tailwind's preflight sets a global `border-color: var(--mv-sep-3)` (gray-200) on
-       every element. Any element that carries a border utility whose COLOUR utility was
-       not generated into compiled-tailwind.css therefore renders a near-white hairline
-       on this dark UI — which is where the stray white lines in the panels come from.
-       (Confirmed case: `border-m3-outline/30` in the V2RAY panel. `.border-m3-outline`
-       is in the compiled file; the /30 opacity variant is not, so nothing sets a colour.)
-
-       Re-pointing the default at the app's own border token fixes the existing lines and,
-       more usefully, means a future utility that fails to compile degrades to the right
-       colour instead of a bright scar.
-
-       `html *` rather than `*`: tailwind.js injects preflight at RUNTIME, so its
-       stylesheet lands after this block and an equal-specificity rule would lose on
-       source order. One element selector (0,0,1) outranks preflight's `*` (0,0,0) while
-       still losing to any real colour utility (0,1,0) — so this stays a fallback and
-       never overrides a border colour someone actually asked for. */
     html *,
     html *::before,
     html *::after {
       border-color: var(--ide-border, #222222);
     }
 
-    /* `.custom-scrollbar` was used in markup across the panels but never defined, so
-       every scroll area fell back to Chromium's default bar — which paints a wide
-       track with a dark border on hover. Define it once, globally, as a thin
-       borderless overlay thumb; `border: none` on the track kills the hover outline. */
     .custom-scrollbar::-webkit-scrollbar,
     *::-webkit-scrollbar {
       width: 6px;
@@ -169,9 +170,6 @@
     }
   </style>
 
-  <!-- Design system. Order matters: tokens, then the bridge that puts the existing
-       markup onto them, then the new components. All three load after style.css and the
-       block above so they win on equal specificity. -->
   <link rel="stylesheet" href="ui/tokens.css" />
   <link rel="stylesheet" href="ui/bridge.css" />
   <link rel="stylesheet" href="ui/components.css" />
@@ -181,60 +179,36 @@
   <script>
     window.addEventListener('error', function (e) {
       const errorDiv = document.createElement('div');
-      errorDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:red;color:var(--mv-label);z-index:999999;padding:20px;font-family:var(--mv-font-mono);font-size:16px;word-wrap:break-word;';
+      errorDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:red;color:var(--mv-label);z-index:999999;padding:20px;font-family:var(--mv-font-mono);font-size:16px;word-wrap:break-word';
       errorDiv.innerHTML = "<b>Uncaught Error:</b> " + e.message + "<br><b>File:</b> " + e.filename + ":" + e.lineno + ":" + e.colno + "<br><br>" + (e.error && e.error.stack ? e.error.stack.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '');
       document.body.appendChild(errorDiv);
     });
     window.addEventListener('unhandledrejection', function (e) {
       const errorDiv = document.createElement('div');
-      errorDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:purple;color:var(--mv-label);z-index:999999;padding:20px;font-family:var(--mv-font-mono);font-size:16px;word-wrap:break-word;';
+      errorDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:purple;color:var(--mv-label);z-index:999999;padding:20px;font-family:var(--mv-font-mono);font-size:16px;word-wrap:break-word';
       errorDiv.innerHTML = "<b>Unhandled Promise Rejection:</b> " + e.reason;
       document.body.appendChild(errorDiv);
     });
   </script>
 </head>
 
-
 <body class="layout">
-  <!-- Startup system check. Deliberately the FIRST script in the body: every other script
-       in this app loads at the bottom, so mounting here is what lets the overlay paint
-       before the rest of the page is built instead of appearing on top of it afterwards. -->
   <script src="components/systemcheck.js"></script>
-
-  <!-- macOS traffic-light window controls (top-left) -->
   <script src="components/mac-window-controls.js"></script>
 
-  <!-- CUSTOM FRAMELESS TITLE BAR -->
   <header class="header-bar" style="
         -webkit-app-region: drag;
         display: flex;
         align-items: center;
-        /* flex-start, not space-between: once the row overflows, space-between
-           lets the packing drift and the anchored left group gets pushed off
-           screen too. With flex-start plus `margin-left:auto` spacers, the
-           slack lives in the margins, collapses to zero first, and the left
-           group never moves. */
         justify-content: flex-start;
-        /* 28px controls inside a 35px bar left only ~3px above them, while the
-           workspace below opens with its own 4px padding — so the row read as
-           pinned to the top. 40px gives the controls even air on both sides,
-           and matches the height of the Android Studio main toolbar. */
         height: 40px;
         padding: 0 12px;
         background: transparent;
         border-bottom: none;
-        /* Responsive rule for this bar: nothing resizes and nothing reorders.
-           The row is laid out LTR so the fixed group anchors to the left; the
-           slack between groups collapses first, and once it is gone the groups
-           simply run past the right edge and are clipped there — sliding out
-           one at a time instead of overlapping or vanishing. `order` keeps the
-           visual arrangement while leaving the DOM untouched. */
         direction: ltr;
         overflow: hidden;
         gap: 10px;
       ">
-    <!-- RIGHT SIDE (Under Windows Native Controls) -->
-    <!-- margin-right is 140px so the text does not hide under the Close/Max/Min buttons -->
     <div style="
           display: flex;
           align-items: center;
@@ -244,12 +218,9 @@
           margin-left: auto;
           margin-right: 0;
         ">
-      <!-- Brand wordmark. Content and animation live in components/brand-title.js -->
       <span id="brand-title"></span>
-
     </div>
 
-    <!-- CENTER (Traffic Stats) -->
     <div style="
           display: flex;
           align-items: center;
@@ -261,14 +232,9 @@
           gap: 16px;
           -webkit-app-region: drag;
         ">
-      <!-- ذخیرهٔ خودکار، شروع/توقف اسکن و «اسکن مجدد» از این نوار برداشته شدند: حالا داخل
-           خودِ صفحهٔ اسکن‌اند (components/scan.js) — دکمهٔ گرد سربرگ و یک ردیف در «تنظیمات اسکن». -->
-
-      <!-- Header Traffic Placeholder -->
       <div id="header-traffic-module-container"></div>
     </div>
 
-    <!-- LEFT SIDE (App Icon, Help, About, Status) -->
     <div style="
           display: flex;
           align-items: center;
@@ -279,12 +245,8 @@
           gap: 6px;
         ">
       <button class="btn-sm" style="
-            font-family:
-              &quot;Vazirmatn&quot;, &quot;IRANSans&quot;, Tahoma, sans-serif;
+            font-family: &quot;Vazirmatn&quot;, &quot;IRANSans&quot;, Tahoma, sans-serif;
             font-size: 12.5px;
-            /* Fixed height, not padding: the two buttons hold different-sized
-               icons (18px glyph vs 21px tile), so padding alone would give
-               their hover plates different heights. */
             height: 28px;
             padding: 0 10px;
             background: transparent;
@@ -298,32 +260,16 @@
             align-items: center;
             gap: 6px;
             color: var(--ide-text-muted);
-          " onmouseover="
-            this.style.background = 'var(--mv-fill)';
-            this.style.color = 'var(--ide-text-main)';
-          " onmouseout="
-            this.style.background = 'transparent';
-            this.style.color = 'var(--ide-text-muted)';
-          " onclick="openGuideTab()">
-        <!-- RTL: the label comes first so it renders on the right, icon on the
-             left. The Persian face sits optically high inside its line box, so
-             it needs a 1px nudge to centre against the icon. -->
+          " onmouseover="this.style.background = 'var(--mv-fill)'; this.style.color = 'var(--ide-text-main)';" onmouseout="this.style.background = 'transparent'; this.style.color = 'var(--ide-text-muted)';" onclick="openGuideTab()">
         <span style="display: inline-block; transform: translateY(1px)">راهنما</span>
-        <!-- Outline manual/book glyph on the left edge of the button. -->
-        <svg style="width: 18px; height: 18px; flex-shrink: 0" viewBox="0 0 512 512" fill="currentColor"
-          xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="m502.754 232.852-38.203-41.54A35.1 35.1 0 0 0 438.777 180H302.516V35c0-19.3-15.707-35-35.012-35h-20.008c-19.308 0-35.012 15.7-35.012 35v25H72.828c-9.332 0-18.433 3.816-24.973 10.46[...]
+        <svg style="width: 18px; height: 18px; flex-shrink: 0" viewBox="0 0 512 512" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="m502.754 232.852-38.203-41.54A35.1 35.1 0 0 0 438.777 180H302.516V35c0-19.3-15.707-35-35.012-35h-20.008c-19.308 0-35.012 15.7-35.012 35v25H72.828c-9.332 0-18.433 3.816-24.973 10.46[...]
             fill="currentColor"></path>
         </svg>
       </button>
       <button class="btn-sm" style="
-            font-family:
-              &quot;Vazirmatn&quot;, &quot;IRANSans&quot;, Tahoma, sans-serif;
+            font-family: &quot;Vazirmatn&quot;, &quot;IRANSans&quot;, Tahoma, sans-serif;
             font-size: 12.5px;
-            /* Fixed height, not padding: the two buttons hold different-sized
-               icons (18px glyph vs 21px tile), so padding alone would give
-               their hover plates different heights. */
             height: 28px;
             padding: 0 10px;
             background: transparent;
@@ -337,16 +283,8 @@
             align-items: center;
             gap: 6px;
             color: var(--ide-text-muted);
-          " onmouseover="
-            this.style.background = 'var(--mv-fill)';
-            this.style.color = 'var(--ide-text-main)';
-          " onmouseout="
-            this.style.background = 'transparent';
-            this.style.color = 'var(--ide-text-muted)';
-          " onclick="showModal('about-modal')">
+          " onmouseover="this.style.background = 'var(--mv-fill)'; this.style.color = 'var(--ide-text-main)';" onmouseout="this.style.background = 'transparent'; this.style.color = 'var(--ide-text-muted)';" onclick="showModal('about-modal')">
         <span style="display: inline-block; transform: translateY(1px)">درباره ما</span>
-        <!-- Filled blue tile on the left, mirroring the green "IS" project chip
-             in Android Studio: 5px corners, Google blue, monogram knocked out. -->
         <span style="
               width: 21px;
               height: 21px;
@@ -373,12 +311,7 @@
             -webkit-app-region: no-drag;
             margin-left: 4px;
             transition: color 0.2s;
-          " onmouseover="this.style.color = 'var(--ide-text-main)'"
-        onmouseout="this.style.color = 'var(--ide-text-muted)'" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2" stroke-linecap="round">
-        <!-- Four rules, spaced 5 units apart like the Android Studio main-menu
-             icon. The old 4-unit spacing with a 2.5 stroke packed them so
-             tightly the glyph read as a solid block at 20px. -->
+          " onmouseover="this.style.color = 'var(--ide-text-main)'" onmouseout="this.style.color = 'var(--ide-text-muted)'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <line x1="4" y1="4.5" x2="20" y2="4.5"></line>
         <line x1="4" y1="9.5" x2="20" y2="9.5"></line>
         <line x1="4" y1="14.5" x2="20" y2="14.5"></line>
@@ -388,39 +321,31 @@
     </div>
   </header>
 
-
-  <!-- Main Dropdown Menu -->
   <div id="main-menu-overlay" class="hidden fixed inset-0 z-[100]" onclick="toggleMainMenu()"></div>
-  <div id="main-menu"
-    class="hidden fixed top-12 right-4 w-64 bg-gs-panel border border-gs-border rounded-xl shadow-2xl z-[101] overflow-hidden"
-    dir="rtl">
+  <div id="main-menu" class="hidden fixed top-12 right-4 w-64 bg-gs-panel border border-gs-border rounded-xl shadow-2xl z-[101] overflow-hidden" dir="rtl">
     <div class="p-2 flex flex-col gap-1">
-      <button onclick="window.openFixedIpTab(); toggleMainMenu()"
-        class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gs-text hover:bg-gs-bg hover:text-gs-primary rounded-lg transition-colors text-right">
+      <button onclick="window.openFixedIpTab(); toggleMainMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gs-text hover:bg-gs-bg hover:text-gs-primary rounded-lg transition-colors text-right">
         <i class="ph-bold ph-globe-hemisphere-west text-lg"></i>
         <div class="flex flex-col">
           <span class="font-bold">انتخاب آیپی ثابت</span>
           <span class="text-[10px] text-gs-muted">تست و انتخاب آیپی برای قفل لوکیشن</span>
         </div>
       </button>
-      <button onclick="window.openDnsCleanTab(); toggleMainMenu()"
-        class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gs-text hover:bg-gs-bg hover:text-gs-primary rounded-lg transition-colors text-right">
+      <button onclick="window.openDnsCleanTab(); toggleMainMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gs-text hover:bg-gs-bg hover:text-gs-primary rounded-lg transition-colors text-right">
         <i class="ph-bold ph-broom text-lg"></i>
         <div class="flex flex-col">
           <span class="font-bold">پاک‌سازی عمیق DNS</span>
           <span class="text-[10px] text-gs-muted">انتخاب DNS و پاک کردن ته‌مانده‌ها</span>
         </div>
       </button>
-      <button onclick="window.openNetDiagTab(); toggleMainMenu()"
-        class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gs-text hover:bg-gs-bg hover:text-gs-primary rounded-lg transition-colors text-right">
+      <button onclick="window.openNetDiagTab(); toggleMainMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gs-text hover:bg-gs-bg hover:text-gs-primary rounded-lg transition-colors text-right">
         <i class="ph-bold ph-stethoscope text-lg"></i>
         <div class="flex flex-col">
           <span class="font-bold">دیاگ اینترنت</span>
           <span class="text-[10px] text-gs-muted">وقتی وصل است ولی صفحه‌ای باز نمی‌شود</span>
         </div>
       </button>
-      <button onclick="window.openChangelogTab(); toggleMainMenu()"
-        class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gs-text hover:bg-gs-bg hover:text-gs-primary rounded-lg transition-colors text-right">
+      <button onclick="window.openChangelogTab(); toggleMainMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gs-text hover:bg-gs-bg hover:text-gs-primary rounded-lg transition-colors text-right">
         <i class="ph-bold ph-scroll text-lg"></i>
         <div class="flex flex-col">
           <span class="font-bold">لیست تغییرات</span>
@@ -428,74 +353,50 @@
         </div>
       </button>
       <div class="h-px bg-gs-border my-1"></div>
-      <button onclick="toggleMainMenu()"
-        class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gs-muted hover:bg-gs-bg hover:text-gs-danger rounded-lg transition-colors text-right">
+      <button onclick="toggleMainMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gs-muted hover:bg-gs-bg hover:text-gs-danger rounded-lg transition-colors text-right">
         <i class="ph-bold ph-x text-lg"></i>
         بستن منو
       </button>
     </div>
   </div>
 
-  <!-- Notification Menu -->
   <div id="notification-menu-overlay" class="hidden fixed inset-0 z-[100]" onclick="toggleNotificationMenu()"></div>
-  <div id="notification-menu"
-    class="hidden fixed bottom-8 right-2 w-64 bg-gs-panel border border-gs-border rounded-xl shadow-2xl z-[101] overflow-hidden"
-    dir="rtl">
+  <div id="notification-menu" class="hidden fixed bottom-8 right-2 w-64 bg-gs-panel border border-gs-border rounded-xl shadow-2xl z-[101] overflow-hidden" dir="rtl">
     <div class="p-3 border-b border-gs-border bg-gs-bg flex justify-between items-center">
       <span class="font-bold text-sm text-gs-text">تنظیمات نوتیفیکیشن</span>
-      <button onclick="requestNotificationPermission()" id="btn-notif-perm"
-        class="text-[10px] bg-gs-primary/10 text-gs-primary px-2 py-1 rounded hover:bg-gs-primary/20 transition-colors">دسترسی
-        ویندوز</button>
+      <button onclick="requestNotificationPermission()" id="btn-notif-perm" class="text-[10px] bg-gs-primary/10 text-gs-primary px-2 py-1 rounded hover:bg-gs-primary/20 transition-colors">دسترسی ویندوز</button>
     </div>
-    <div class="p-2 flex flex-col gap-1 max-h-[60vh] overflow-y-auto custom-scrollbar" id="notif-settings-list">
-      <!-- Toggles will be injected by JS -->
-    </div>
+    <div class="p-2 flex flex-col gap-1 max-h-[60vh] overflow-y-auto custom-scrollbar" id="notif-settings-list"></div>
   </div>
 
-  <!-- History Module Placeholder -->
   <div id="history-module-container"></div>
 
-  <!-- MAIN WORKSPACE -->
   <div class="main-area">
-    <!-- ACTIVITY BAR -->
     <div class="activity-bar">
       <div style="display: flex; flex-direction: column; gap: 12px">
-        <!-- New Tab -->
         <button title="تب جدید" onclick="promptNewTab()">
-          <svg style="width: 24px; height: 24px" viewBox="0 0 24 24" fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M18 2c2.206 0 4 1.794 4 4v12c0 2.206-1.794 4-4 4H6c-2.206 0-4-1.794-4-4V6c0-2.206 1.794-4 4-4zm0-2H6a6 6 0 0 0-6 6v12a6 6 0 0 0 6 6h12a6 6 0 0 0 6-6V6a6 6 0 0 0-6-6"
-              fill="currentColor"></path>
+          <svg style="width: 24px; height: 24px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 2c2.206 0 4 1.794 4 4v12c0 2.206-1.794 4-4 4H6c-2.206 0-4-1.794-4-4V6c0-2.206 1.794-4 4-4zm0-2H6a6 6 0 0 0-6 6v12a6 6 0 0 0 6 6h12a6 6 0 0 0 6-6V6a6 6 0 0 0-6-6" fill="currentColor"></path>
             <path d="M12 18a1 1 0 0 1-1-1V7a1 1 0 0 1 2 0v10a1 1 0 0 1-1 1" fill="currentColor"></path>
             <path d="M6 12a1 1 0 0 1 1-1h10a1 1 0 0 1 0 2H7a1 1 0 0 1-1-1" fill="currentColor"></path>
           </svg>
         </button>
-        <!-- Duplicate Tab -->
         <button title="کپی تب فعلی" onclick="duplicateTab()">
-          <svg style="width: 24px; height: 24px" viewBox="0 0 800 800" fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg">
+          <svg style="width: 24px; height: 24px" viewBox="0 0 800 800" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <g fill="currentColor">
-              <path
-                d="M500 758.3H400c-48.9 0-84.2 0-113.1-3.9-34-4.6-57.3-14.7-75.3-32.7-18.1-18.1-28.2-41.3-32.7-75.3-3.9-28.9-3.9-64.2-3.9-113.1V366.7c0-48.9 0-84.2 3.9-113.1 4.6-34 14.7-57.3 32.7[...]
+              <path d="M500 758.3H400c-48.9 0-84.2 0-113.1-3.9-34-4.6-57.3-14.7-75.3-32.7-18.1-18.1-28.2-41.3-32.7-75.3-3.9-28.9-3.9-64.2-3.9-113.1V366.7c0-48.9 0-84.2 3.9-113.1 4.6-34 14.7-57.3 32.7[...]
                 fill="currentColor" class=""></path>
-              <path
-                d="M200 658.3c-68.9 0-125-56.1-125-125v-200c0-64.8 0-111.7 5.1-149.6 5.8-43.5 18.6-73 41.3-95.7s52.2-35.4 95.7-41.3c38-5.1 84.8-5.1 149.6-5.1H500c68.9 0 125 56.1 125 125h-50c0-41.[...]
+              <path d="M200 658.3c-68.9 0-125-56.1-125-125v-200c0-64.8 0-111.7 5.1-149.6 5.8-43.5 18.6-73 41.3-95.7s52.2-35.4 95.7-41.3c38-5.1 84.8-5.1 149.6-5.1H500c68.9 0 125 56.1 125 125h-50c0-41.[...]
                 fill="currentColor" class=""></path>
             </g>
           </svg>
         </button>
-        <!-- Scan Settings Sidebar -->
         <button title="تنظیمات اسکن" onclick="toggleSidebar()">
-          <svg style="width: 24px; height: 24px" viewBox="0 0 512 512" fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M490.667 405.333h-56.811C424.619 374.592 396.373 352 362.667 352s-61.931 22.592-71.189 53.333H21.333C9.557 405.333 0 414.891 0 426.667S9.557 448 21.333 448h270.144c9.237 30.741 3[...]
+          <svg style="width: 24px; height: 24px" viewBox="0 0 512 512" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M490.667 405.333h-56.811C424.619 374.592 396.373 352 362.667 352s-61.931 22.592-71.189 53.333H21.333C9.557 405.333 0 414.891 0 426.667S9.557 448 21.333 448h270.144c9.237 30.741 3[...]
               fill="currentColor" class=""></path>
           </svg>
         </button>
-        <!-- History -->
         <button id="btn-history" title="تاریخچه اسکن‌ها" onclick="toggleHistoryMenu()">
-          <svg style="width: 24px; height: 24px" viewBox="0 0 682.667 682.667" fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg">
+          <svg style="width: 24px; height: 24px" viewBox="0 0 682.667 682.667" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <defs>
